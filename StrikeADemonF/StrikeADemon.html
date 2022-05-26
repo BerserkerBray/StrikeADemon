@@ -1,0 +1,889 @@
+<html>
+<head>
+<title>Strike a Demon</title>
+<style type="text/css">
+.text{color:white;font-size:1em;font-weight:bold;font-family:Perpetus;}
+.hearts{;}
+</style>
+<script language="javascript">
+function init()
+{
+	//hides canvas and health
+	GameCanvas.hidden = true;	
+	hearts.hidden = true;
+	RestartButton.hidden = true;
+}
+function start() 
+{
+	//displays canvas and sets game
+	GameCanvas.hidden = false;
+	StartButton.hidden = true;
+	HTPButton.hidden = true;
+	RestartButton.hidden = false;
+	initGame();
+}
+//launches game when hitting start
+function initGame()
+{
+	hearts.hidden = false;
+	window.addEventListener('keydown',keydownCheck,true);
+	window.addEventListener('keyup',keyupCheck,true);
+	playerTimer();
+	enemyTimer();
+}
+function HTP()
+{
+//redirect in new tab to how to play site(site needed to be made)
+open("htpPage.html", "_blank");
+
+}
+function Restart()
+{
+location.reload();
+}
+//player move timer
+var onOff = 1 * 1;
+function playerTimer()
+{
+		if(onOff == 0)
+		{
+			clearInterval(playerTimer);
+		}
+		else if(onOff == 1)
+		{
+			playerTimer = setInterval("movePlayer()",60);
+		}
+}
+var onOff2 = 1 * 1;
+function enemyTimer()
+{
+		if(onOff2 == 0)
+		{
+			clearInterval(enemyTimer);
+		}
+		else if(onOff2 == 1)
+		{
+			enemyTimer = setInterval("moveEnemy()",150);
+		}
+}
+//size of each tile on map
+var tilesize = 32;
+//map
+map = [
+	//game map layout
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+	];
+//pause button value
+var p = 0;
+//scoring
+var score = 0;
+//player controls
+var left = false;
+var right = false;
+var jump = false;
+var attack = false;
+//cooldowns
+var jumpCooldown = 1;
+var attackCooldown = 1;
+//player life
+var life = 10;
+//player position
+var playerX = 264;
+var playerY = 0;
+//barb info
+var barbX = 1000;
+var barbY = 286;
+var barbSpeed = 2;
+var barbHealth = 2;
+var barbDead = 0;
+//arrow info
+var arrowX = 1000;
+var arrowY = 246;
+var arrowSpeed = 5;
+var arrowHit = 0;
+var arrowShot = 0;
+var arrowD = 0;
+//ninja info
+var ninjaX = 1000;
+var ninjaY = 286;
+var ninjaSpeed = 4;
+var ninjaHealth = 5;
+var ninjaDead = 0;
+//grave info
+var graveX = -100;
+var graveY = -200;
+var graveSpeed = 96;
+//player speeds
+var playerSpeedX = 10;
+var playerJumpSpeed = -128;
+var playerSpeedY = 0;
+//gravity speed
+var gravity = 4;
+//checks if gravity should take effect
+var playerGround = true;
+//dead enemies
+var barbK = 0;
+var ninjaK = 0;
+function keydownCheck(evt)
+{
+if(life > 0)
+{
+switch(evt.which)
+	{
+	//key "A"
+	//left
+	case 65:
+	left = true;
+		break;
+	//key "D"
+	//right
+	case 68:
+	right = true;
+		break;
+	//key "W"
+	//jump
+	case 87:
+	if (playerGround == true)
+	{
+		if (jumpCooldown == 1)
+		{
+		jump = true;
+		}
+	}
+		break;
+	//key "spacebar"
+	//attack
+	case 32:
+	if (attackCooldown == 1)
+	{
+	attack = true;
+	attackCooldown = 0;
+	}
+		break;
+	}
+}
+}
+function keyupCheck(evt)
+{
+	switch(evt.which)
+	{
+	//key "A"
+	//left
+	case 65:
+	left = false;
+		break;
+	//key "D"
+	//right
+	case 68:
+	right = false;
+		break;
+	//key "W"
+	//jump
+	case 87:
+	jump = false;
+	if (jumpCooldown == 0)
+	{
+	jumpCooldown = 1;
+	}
+		break;
+	//key "spacebar"
+	//attack
+	case 32:
+	if (attackCooldown == 0)
+	{
+	attackCooldown = 1;
+	}
+		break;
+	}
+}
+var barb = new Array();
+var ninja = new Array();
+var arrow = new Array();
+var ninjaA = 1;
+var barbA = 0;
+var arrowA = 0;
+//checks which enemy it should spawn
+var spawned = 0;
+//defines Barbarian
+function barbInfo(barbX,barbY,barbSpeed,barbHealth,barbDead,barbImage)
+{
+	var spawnChance = Math.floor(Math.random()*2);
+	if(spawnChance == 1)
+	{
+	this.barbX = -100;
+	}
+	else
+	{
+	this.barbX = 750;
+	}
+	this.barbY = barbY;
+	this.barbSpeed = 10;
+	this.barbHealth = 2;
+	this.barbDead = 0;
+	this.barbImage = new Image();
+}
+//decides barbarian's position
+for(var b=0; b<barbA;b++)
+{
+	var barbImage = new Image();
+	barb[b] = new barbInfo(barbX,barbY,barbSpeed,barbHealth,barbDead,barbImage);
+}
+//defines Ninja
+function ninjaInfo(ninjaX,ninjaY,ninjaSpeed,ninjaHealth,ninjaDead,ninjaImage)
+{
+	var spawnChance = Math.floor(Math.random()*2);
+	if(spawnChance == 1)
+	{
+	this.ninjaX = -100;
+	}
+	else
+	{
+	this.ninjaX = 750;
+	}
+	this.ninjaY = ninjaY;
+	//between 5 and 12
+	this.ninjaSpeed = Math.floor(Math.random() * (12 - 5 + 1)) + 5;
+	this.ninjaHealth = 5;
+	this.ninjaDead = 0;
+	this.ninjaImage = new Image();
+}
+//decides ninja's position
+for(var n=0; n<ninjaA;n++)
+{
+	var ninjaImage = new Image();
+	ninja[n] = new ninjaInfo(ninjaX,ninjaY,ninjaSpeed,ninjaHealth,ninjaDead,ninjaImage);
+}
+for(var a=0; a<arrowA;a++)
+{
+	var arrowImage = new Image();
+	arrow[a] = new arrowInfo(arrowX,arrowY,arrowSpeed,arrowHit,arrowImage,arrowShot,arrowD);
+}
+//defines arrows
+function arrowInfo(arrowX,arrowY,arrowSpeed,arrowHit,arrowImage,arrowShot,arrowD)
+{
+	this.arrowX = arrowX;
+	this.arrowY = 310;
+	this.arrowSpeed = 32;
+	this.arrowHit = 0;
+	this.arrowImage = new Image();
+	this.arrowShot = 0;
+	this.arrowD = 0;
+}
+function spawnBarb()
+{
+barbA += 1;
+barb.push(new barbInfo(barbX,barbY,barbSpeed,barbHealth,barbDead,barbImage));
+}
+function spawnNinja()
+{
+ninjaA += 1;
+ninja.push(new ninjaInfo(ninjaX,ninjaY,ninjaSpeed,ninjaHealth,ninjaDead,ninjaImage));
+}
+function moveEnemy()
+{
+score = (ninjaK * 100) + (barbK * 50);
+	for(var nm=0;nm<ninjaA;nm++)
+	{	
+		//checks if ninja is dead
+		if(ninja[nm].ninjaHealth < 1)
+		{
+		ninja[nm].ninjaDead += 1;
+		}
+		//hitbox for ninja
+		if (ninja[nm].ninjaY + 64 >= playerY && ninja[nm].ninjaY - 64 <= playerY + 14 && ninja[nm].ninjaX <= playerX + playerAttackFieldX && ninja[nm].ninjaX + 64 >= playerX && attackFrame == 1)
+		{
+		ninja[nm].ninjaHealth -= 1;
+			if (ninja[nm].ninjaX  > playerX)
+			{
+			ninja[nm].ninjaX += 64;
+			}
+			else if (ninja[nm].ninjaX  < playerX)
+			{
+			ninja[nm].ninjaX -= 64;
+			}
+		}
+		else if (ninja[nm].ninjaY + 64 >= playerY && ninja[nm].ninjaY - 64 <= playerY + 14 && ninja[nm].ninjaX >= playerX - playerAttackFieldX && ninja[nm].ninjaX + 64 <= playerX && attackFrame == 1 && facingLeft == true)
+		{
+		ninja[nm].ninjaHealth -= 1;
+			if (ninja[nm].ninjaX  > playerX)
+			{
+			ninja[nm].ninjaX += 64;
+			}
+			else if (ninja[nm].ninjaX  < playerX)
+			{
+			ninja[nm].ninjaX -= 64;
+			}
+		}
+		if(ninja[nm].ninjaDead == 0)
+		{
+			//checks if ninja should attack player
+			if(ninja[nm].ninjaY + 64 >= playerY && ninja[nm].ninjaY - 64 <= playerY && ninja[nm].ninjaX - 16 <= playerX + 24 && ninja[nm].ninjaX >= playerX)
+			{
+			//50% chance for ninja to attack
+			var hitChance = Math.floor(Math.random()*2);
+				if(hitChance == 1)
+				{
+				ninja[nm].ninjaImage.src = "Images/Ninja Art attack.png";
+				life -= 1;
+				//player hurt sound
+				}
+				if(ninja[nm].ninjaX >= playerX + 24)
+				{
+				ninja[nm].ninjaX += 128;
+				}
+				else if(ninja[nm].ninjaX <= playerX + 24)
+				{
+				ninja[nm].ninjaX -= 128;
+				}
+			}
+			//moves ninja towards player
+			else if(ninja[nm].ninjaX >= playerX + 24)
+			{
+			ninja[nm].ninjaImage.src = "Images/Ninja Art.png";
+			ninja[nm].ninjaX -= ninja[nm].ninjaSpeed;
+			}
+			else if(ninja[nm].ninjaX <= playerX + 24)
+			{
+			ninja[nm].ninjaImage.src = "Images/Ninja Art.png";
+			ninja[nm].ninjaX += ninja[nm].ninjaSpeed;
+			}
+		}
+		//death animation
+		else
+		{
+			if(ninja[nm].ninjaDead == 1)
+			{
+			ninja[nm].ninjaImage.src = "Images/Ninja art death1.png";
+			}
+			else if(ninja[nm].ninjaDead == 2)
+			{
+			ninja[nm].ninjaImage.src = "Images/Ninja art death2.png";
+			}
+			else if(ninja[nm].ninjaDead == 3)
+			{
+			ninja[nm].ninjaImage.src = "Images/Ninja art death3.png";
+			}
+			else if(ninja[nm].ninjaDead == 4)
+			{
+			ninja.splice(nm,1);
+			ninjaA -= 1;
+			ninjaK += 1;
+			}
+		}
+	}
+	//2nd wave
+	if (ninjaK == 1 && spawned == 0)
+	{
+	//1 barb
+	spawnBarb();
+	spawned += 1;
+	}
+	//3rd wave
+	if (barbK == 1 && spawned == 1)
+	{
+	//2 ninja
+	spawnNinja();
+	spawnNinja();
+	spawned += 1;
+	}
+	//4th wave
+	if (ninjaK == 3 && spawned == 2)
+	{
+	//2 barbs
+	spawnBarb();
+	spawnBarb();
+	spawned += 1;
+	}
+	//5th wave
+	if (barbK == 3 && spawned == 3)
+	{
+	//2 barbs
+	spawnBarb();
+	spawnBarb();
+	//2 ninjas
+	spawnNinja();
+	spawnNinja();
+	spawned += 1;
+	}
+	//6th wave
+	if(score == 750 && spawned == 4)
+	{
+	//4 ninjas
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	//2 barbs
+	spawnBarb();
+	spawnBarb();
+	spawned += 1
+	}
+	//7th wave
+	if(score == 1250 && spawned == 5)
+	{
+	//6 ninjas
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	//4 barbs
+	spawnBarb();
+	spawnBarb();
+	spawnBarb();
+	spawnBarb();
+	spawned += 1
+	}
+	//8th wave
+	if(score == 2050 && spawned == 6)
+	{
+	//10 ninjas
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawned += 1
+	}
+	//9th wave
+	if(score == 3050 && spawned == 7)
+	{
+	//4 ninjas
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	spawnNinja();
+	//1 barb
+	spawnBarb();
+	spawned += 1
+	}
+	if(score == 3500 && spawned == 8)
+	{
+	//spawn boss
+	
+	
+	spawned += 1
+	}
+	for(var bm=0;bm<barbA;bm++)
+	{	
+		//checks if barb is dead
+		if(barb[bm].barbHealth < 1)
+		{
+		barb[bm].barbDead += 1;
+		}
+		//hitbox for barb
+		if (barb[bm].barbY + 64 >= playerY && barb[bm].barbY - 64 <= playerY + 14 && barb[bm].barbX <= playerX + playerAttackFieldX && barb[bm].barbX + 64 >= playerX && attackFrame == 1)
+		{
+		barb[bm].barbHealth -= 1;
+		}
+		else if (barb[bm].barbY + 64 >= playerY && barb[bm].barbY - 64 <= playerY + 14 && barb[bm].barbX >= playerX - playerAttackFieldX && barb[bm].barbX + 64 <= playerX && attackFrame == 1 && facingLeft == true)
+		{
+		barb[bm].barbHealth -= 1;
+		}
+		if(barb[bm].barbDead == 0)
+		{
+			//2% chance for barb to attack
+			var hitChance = Math.floor(Math.random()*50);
+				if(hitChance == 1)
+				{
+				arrowA += 1;
+				barb[bm].barbImage.src = "Images/Barbarian Art attack.png";
+				arrow.push(new arrowInfo(arrowX,arrowY,arrowSpeed,arrowHit,arrowImage,arrowShot,arrowD));
+				//play arrow sound
+				}
+				for(var am=0;am<arrowA;am++)
+				{
+				arrow[am].arrowImage.src = "Images/Arrow.png";
+				if(arrow[am].arrowShot == 0)
+				{
+				arrow[am].arrowX = barb[bm].barbX;
+				}
+					if(arrow[am].arrowX >= playerX && arrow[am].arrowShot == 0)
+					{
+					arrow[am].arrowD = 0;
+					arrow[am].arrowShot = 1;
+					}
+					else if(arrow[am].arrowX <= playerX && arrow[am].arrowShot == 0)
+					{
+					arrow[am].arrowD = 1;
+					arrow[am].arrowShot = 1;
+					}
+					if(arrow[am].arrowD == 0 && arrow[am].arrowShot == 1)
+					{
+					arrow[am].arrowX -= arrow[am].arrowSpeed;
+					}
+					else if(arrow[am].arrowD == 1 && arrow[am].arrowShot == 1)
+					{
+					arrow[am].arrowX += arrow[am].arrowSpeed;
+					}
+					if(arrow[am].arrowY + 10 >= playerY + 32 && arrow[am].arrowY - 10 <= playerY + 32 && arrow[am].arrowX - 16 <= playerX + 32 && arrow[am].arrowX >= playerX)
+					{
+					arrow.splice(am,1);
+					arrowA -= 1;
+					life -= 1;
+					//player hurt sound
+					}
+					else if(arrow[am].arrowX >= 750 || arrow[am].arrowX <= -100)
+					{
+					arrow.splice(am,1);
+					arrowA -= 1;
+					}
+				}
+			}
+			//moves barb towards player
+			if(barb[bm].barbX >= 576)
+			{
+			barb[bm].barbImage.src = "Images/Barbarian Art.png";
+			barb[bm].barbX -= barb[bm].barbSpeed;
+			}
+			else if(barb[bm].barbX <= 8)
+			{
+			barb[bm].barbImage.src = "Images/Barbarian Art.png";
+			barb[bm].barbX += barb[bm].barbSpeed;
+			}
+		//death animation
+		else
+		{
+			if(barb[bm].barbDead == 1)
+			{
+			barb[bm].barbImage.src = "Images/Barbarian art death1.png";
+			}
+			else if(barb[bm].barbDead == 2)
+			{
+			barb[bm].barbImage.src = "Images/Barbarian art death2.png";
+			}
+			else if(barb[bm].barbDead == 3)
+			{
+			barb.splice(bm,1);
+			barbA -= 1;
+			barbK += 1;
+			}
+		}
+	}
+}
+//variable for preventing death sound from playing repeatedly
+var deathSoundPlayed = 0;
+//player hitbox for attacking
+var playerAttackFieldX = 45;
+function movePlayer()
+{
+	if(life < 1)
+	{
+	//sets all hearts to empty when player is killed
+	heart1.src = "Images/heartEmpty.png";heart2.src = "Images/heartEmpty.png";heart3.src = "Images/heartEmpty.png";heart4.src = "Images/heartEmpty.png";heart5.src = "Images/heartEmpty.png";heart6.src = "Images/heartEmpty.png";heart7.src = "Images/heartEmpty.png";heart8.src = "Images/heartEmpty.png";heart9.src = "Images/heartEmpty.png";heart10.src = "Images/heartEmpty.png";
+	//makes grave spawn above player
+	graveX = playerX;
+	//makes grave fall to player
+	if(graveY < playerY - 32)
+	{
+	graveY += graveSpeed;
+	}
+	//plays death sound once
+	if (graveY >= playerY - 32 && deathSoundPlayed < 1)
+	{
+	var deathSound = new Audio('Images/deathSound.mp3');
+	deathSound.play();
+	deathSoundPlayed += 1;
+	}
+	}
+	else
+	{
+	//checks if player is on the bottom of the canvas
+	if (playerY + 80 < 352) 
+	{
+	playerGround = false;
+	}
+	//moves player up if they move below the canvas (failsafe)
+	if (playerY + 80 >= 353)
+	{
+	playerY -= 4;
+	playerGround = true;
+	}
+	//stops player from moving too far left
+	if (playerX + 20 < 0)
+	{
+	playerX += 10;
+	}
+	//stops player from moving too far right
+	if (playerX - 20 > 560)
+	{
+	playerX -= 10;
+	}
+	// moves player left
+	if (left == true)
+	{
+	playerX -= playerSpeedX;
+	}
+	//moves player right
+	if (right == true)
+	{
+	playerX += playerSpeedX;
+	}
+	//makes player jump and stops them from holding jump to jump continuously
+	if (jump == true && playerGround == true && jumpCooldown == 1)
+	{
+	playerSpeedY += playerJumpSpeed;
+	playerY += playerSpeedY;
+	jumpCooldown = 0;
+	}
+	//makes player fall when not on the ground
+	if (playerGround == false)
+	{
+	playerSpeedY += gravity;
+	playerY += playerSpeedY;
+	}
+	//resets players vertical speed when in contact with the ground
+	else if(playerGround == true)
+	{
+	playerSpeedY = 0;
+	}
+	//changes player attack hitbox based on direction
+	if (facingLeft == false)
+	{
+	playerAttackFieldX = 90;
+	}
+	else if(facingLeft == true)
+	{
+	playerAttackFieldX = 30;
+	}
+	}
+	draw();
+	//sets hearts to be empty when player takes damage
+	if (life == 1)
+	{
+	heart2.src = "Images/heartEmpty.png";heart3.src = "Images/heartEmpty.png";heart4.src = "Images/heartEmpty.png";heart5.src = "Images/heartEmpty.png";heart6.src = "Images/heartEmpty.png";heart7.src = "Images/heartEmpty.png";heart8.src = "Images/heartEmpty.png";heart9.src = "Images/heartEmpty.png";heart10.src = "Images/heartEmpty.png";
+	}
+	if (life == 2)
+	{
+	heart3.src = "Images/heartEmpty.png";heart4.src = "Images/heartEmpty.png";heart5.src = "Images/heartEmpty.png";heart6.src = "Images/heartEmpty.png";heart7.src = "Images/heartEmpty.png";heart8.src = "Images/heartEmpty.png";heart9.src = "Images/heartEmpty.png";heart10.src = "Images/heartEmpty.png";
+	}
+	if (life == 3)
+	{
+	heart4.src = "Images/heartEmpty.png";heart5.src = "Images/heartEmpty.png";heart6.src = "Images/heartEmpty.png";heart7.src = "Images/heartEmpty.png";heart8.src = "Images/heartEmpty.png";heart9.src = "Images/heartEmpty.png";heart10.src = "Images/heartEmpty.png";
+	}
+	if (life == 4)
+	{
+	heart5.src = "Images/heartEmpty.png";heart6.src = "Images/heartEmpty.png";heart7.src = "Images/heartEmpty.png";heart8.src = "Images/heartEmpty.png";heart9.src = "Images/heartEmpty.png";heart10.src = "Images/heartEmpty.png";
+	}
+	if (life == 5)
+	{
+	heart6.src = "Images/heartEmpty.png";heart7.src = "Images/heartEmpty.png";heart8.src = "Images/heartEmpty.png";heart9.src = "Images/heartEmpty.png";heart10.src = "Images/heartEmpty.png";
+	}
+	if (life == 6)
+	{
+	heart7.src = "Images/heartEmpty.png";heart8.src = "Images/heartEmpty.png";heart9.src = "Images/heartEmpty.png";heart10.src = "Images/heartEmpty.png";
+	}
+	if (life == 7)
+	{
+	heart8.src = "Images/heartEmpty.png";heart9.src = "Images/heartEmpty.png";heart10.src = "Images/heartEmpty.png";
+	}
+	if (life == 8)
+	{
+	heart9.src = "Images/heartEmpty.png";heart10.src = "Images/heartEmpty.png";
+	}
+	if (life == 9)
+	{
+	heart10.src = "Images/heartEmpty.png";
+	}
+}
+function reflectImage(c,ctx,image,x,y){
+    // moves x
+    ctx.translate(x+image.width,y);
+
+    //flips horizontally
+    ctx.scale(-1,1);
+    
+    //draw the img
+    ctx.drawImage(image,0,0);
+    
+    //reset transformations to default
+    ctx.setTransform(1,0,0,1,0,0);
+}
+//checks direction player is facing
+var facingLeft = false;
+//defines images
+var playerImage = new Image();	
+var graveImage = new Image();
+//checks which frame of attack needs to be played
+var attackFrame = 0;
+function animate()
+{
+//defines context and canvas
+var c = document.getElementById("GameCanvas");
+var ctx = c.getContext("2d");
+	//checks if player is dead
+	if (deathSoundPlayed < 1)
+	{
+		if (attack == true)
+		{
+			if (attackFrame == 0)
+			{
+				playerImage.src = "Images/Protag art attack1.png";
+				attackFrame = 1;
+			}
+			else if (attackFrame == 1)
+			{
+				playerImage.src = "Images/Protag art attack2.png";
+				attackFrame = 0;
+				attack = false;
+			}
+		}
+		else
+		{
+			playerImage.src = "Images/Protag art.png";
+		}
+		//makes player face direction when moving and maintains direction when movement stops
+		if(right == false && left == true)
+		{
+			facingLeft = true;
+		}
+		if (right == true && left == false)
+		{
+			facingLeft = false;
+		}
+		if (facingLeft == false)
+		{
+			ctx.drawImage(playerImage, playerX, playerY);
+		}
+		else if (facingLeft == true)
+		{
+			reflectImage(c, ctx, playerImage, playerX, playerY);
+		}
+	}
+	for(var na=0;na<ninjaA;na++)
+	{	
+	if(ninja[na].ninjaX >= playerX + 24)
+	{
+	ctx.drawImage(ninja[na].ninjaImage, ninja[na].ninjaX, ninja[na].ninjaY);
+	}
+	else if(ninja[na].ninjaX <= playerX + 24)
+	{
+	reflectImage(c, ctx, ninja[na].ninjaImage, ninja[na].ninjaX, ninja[na].ninjaY);
+	}
+	}
+	for(var ba=0;ba<barbA;ba++)
+	{	
+	if(barb[ba].barbX >= playerX + 24)
+	{
+	ctx.drawImage(barb[ba].barbImage, barb[ba].barbX, barb[ba].barbY);
+	}
+	else if(barb[ba].barbX <= playerX + 24)
+	{
+	reflectImage(c, ctx, barb[ba].barbImage, barb[ba].barbX, barb[ba].barbY);
+	}
+	for(var aa=0;aa<arrowA;aa++)
+	{	
+	if(arrow[aa].arrowD == 0)
+	{
+	ctx.drawImage(arrow[aa].arrowImage, arrow[aa].arrowX, arrow[aa].arrowY);
+	}
+	else if(arrow[aa].arrowD == 1)
+	{
+	reflectImage(c, ctx, arrow[aa].arrowImage, arrow[aa].arrowX, arrow[aa].arrowY);
+	}
+	}
+	}
+}
+
+function draw()
+{
+//defines context and canvas
+var c = document.getElementById("GameCanvas");
+var ctx = c.getContext("2d");
+	//take info from layout and draw map (incomplete)
+	for(var row =0; row < map.length; row++)
+	{
+		for(var col = 0; col < map[row].length; col++)
+		{
+		var tileType = map[row][col];
+		//draws background
+				var tileImage = new Image();
+				//gets image for corresponding number for map
+				if (tileType == 1)
+				{
+				tileImage.src = "Images/Brick.png"; //default backround
+				}
+				else if (tileType == 2)
+				{
+				tileImage.src = "Images/grassBrick.png";
+				}
+                ctx.drawImage(tileImage, col * tilesize, row * tilesize, tilesize , tilesize);
+		}	
+	}		
+	animate();
+	ctx.font = "45px Arial";
+	ctx.fillStyle = "black";
+	ctx.fillText("Score: " + score,5,35);	
+	if (life < 1)
+	{
+	//draws and scales grave for death screen	
+	graveImage.src = "Images/Grave.png";
+	ctx.imageSmoothingEnabled = false;
+	ctx.drawImage(graveImage, graveX, graveY, 100, 100);
+		//causes game over to appear after grave lands
+		if (deathSoundPlayed == 1)
+		{
+		ctx.font = "50px Arial";
+		ctx.fillStyle = "black";
+		ctx.textAlign = "center";
+		var r = Math.floor(Math.random()*100);
+		if(r == 1)
+		{
+		//play sound easter egg
+		}
+		ctx.fillText("Game Over!",GameCanvas.width/2,GameCanvas.height/2);	
+		clearInterval(enemyTimer);
+		}
+	}
+}	
+
+</script>
+</head>
+<body style = "background-color:blue;"  onload = "init()">
+<center>
+</br>
+<img src ="Images/Title Image.png">
+</br></br>
+<input id="StartButton" type="button" value="Start"
+	onclick = "start()"/>
+<input id="HTPButton" type="button" value="How To Play"
+	onclick = "HTP()"/>
+<input id="RestartButton" type="button" value="Restart"
+	onclick = "Restart()"/>
+</br>
+<canvas id="GameCanvas" width="640" height="384"
+	style="border:1px solid rgb(195,195,195);">
+	This game is not supported by your browser.
+</canvas></br>
+<div id = "hearts">
+<img src="Images/heart.png" height="50" width="50" name="heart1">
+<img src="Images/heart.png" height="50" width="50" name="heart2">
+<img src="Images/heart.png" height="50" width="50" name="heart3">
+<img src="Images/heart.png" height="50" width="50" name="heart4">
+<img src="Images/heart.png" height="50" width="50" name="heart5">
+<img src="Images/heart.png" height="50" width="50" name="heart6">
+<img src="Images/heart.png" height="50" width="50" name="heart7">
+<img src="Images/heart.png" height="50" width="50" name="heart8">
+<img src="Images/heart.png" height="50" width="50" name="heart9">
+<img src="Images/heart.png" height="50" width="50" name="heart10">
+</div>
+</center>
+</body>
+</html>
